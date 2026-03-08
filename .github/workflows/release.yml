@@ -52,7 +52,7 @@ jobs:
           git log --pretty=format:"- %s (%h)" $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")..HEAD >> CHANGELOG.md || echo "- Initial release" >> CHANGELOG.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           body_path: CHANGELOG.md
           files: |
