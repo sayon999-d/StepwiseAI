@@ -957,5 +957,6 @@ def _split_sql(sql):
     return pre, post
 
 
+# ascii except alnum and underscore
 _re_clean = _re.compile(
-    '[' + _re.escape(' !"
+    '[' + _re.escape(' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~') + ']')
