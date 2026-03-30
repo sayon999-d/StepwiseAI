@@ -76,7 +76,6 @@ class GoogleCalendarSyncService:
         token_expiry: datetime,
         calendar_id: str = "primary"
     ) -> Dict[str, Any]:
-        """Connect a Google Calendar account"""
         connection = CalendarConnection(
             user_id=user_id,
             access_token=access_token,
@@ -96,14 +95,12 @@ class GoogleCalendarSyncService:
         }
 
     def disconnect_calendar(self, user_id: str) -> Dict[str, Any]:
-        """Disconnect Google Calendar"""
         if user_id in self.connections:
             del self.connections[user_id]
             return {"disconnected": True}
         return {"disconnected": False, "error": "Not connected"}
 
     def get_connection_status(self, user_id: str) -> Dict[str, Any]:
-        """Get calendar connection status"""
         if user_id not in self.connections:
             return {
                 "connected": False,
@@ -122,7 +119,6 @@ class GoogleCalendarSyncService:
         }
 
     def _generate_oauth_url(self, user_id: str) -> str:
-        """Generate Google OAuth URL for calendar access"""
         client_id = "your_google_client_id"
         redirect_uri = "http://localhost:8000/api/calendar/callback"
         scope = "https://www.googleapis.com/auth/calendar.events"
@@ -144,7 +140,6 @@ class GoogleCalendarSyncService:
         auto_create: bool = None,
         event_types: List[str] = None
     ) -> Dict[str, Any]:
-        """Update calendar sync settings"""
         if user_id not in self.connections:
             return {"error": "Not connected"}
 
@@ -223,7 +218,6 @@ class GoogleCalendarSyncService:
         deadline: datetime,
         description: str = ""
     ) -> Dict[str, Any]:
-        """Create a decision deadline event"""
         return self.create_event(
             user_id=user_id,
             event_type=CalendarEventType.DECISION_DEADLINE,
@@ -241,7 +235,6 @@ class GoogleCalendarSyncService:
         scheduled_time: datetime,
         recurrence: str = "RRULE:FREQ=WEEKLY;BYDAY=MO"
     ) -> Dict[str, Any]:
-        """Create a recurring check-in event"""
         return self.create_event(
             user_id=user_id,
             event_type=CalendarEventType.CHECK_IN,
@@ -260,7 +253,6 @@ class GoogleCalendarSyncService:
         milestone: str,
         target_date: datetime
     ) -> Dict[str, Any]:
-        """Create a goal milestone event"""
         return self.create_event(
             user_id=user_id,
             event_type=CalendarEventType.GOAL_MILESTONE,
@@ -277,7 +269,6 @@ class GoogleCalendarSyncService:
         decision_title: str,
         follow_up_date: datetime
     ) -> Dict[str, Any]:
-        """Create a decision follow-up event"""
         return self.create_event(
             user_id=user_id,
             event_type=CalendarEventType.FOLLOW_UP,
@@ -290,7 +281,6 @@ class GoogleCalendarSyncService:
 
     @staticmethod
     def _make_naive(dt: datetime) -> datetime:
-        """Strip timezone info for safe comparison"""
         if dt and dt.tzinfo is not None:
             return dt.replace(tzinfo=None)
         return dt
@@ -302,7 +292,6 @@ class GoogleCalendarSyncService:
         end_date: datetime = None,
         event_type: CalendarEventType = None
     ) -> List[Dict[str, Any]]:
-        """Get calendar events for a user"""
         if user_id not in self.events:
             return []
 
@@ -338,7 +327,6 @@ class GoogleCalendarSyncService:
         user_id: str,
         days: int = 7
     ) -> List[Dict[str, Any]]:
-        """Get upcoming events for the next N days"""
         now = datetime.utcnow()
         end_date = now + timedelta(days=days)
         return self.get_events(user_id, start_date=now, end_date=end_date)
@@ -349,7 +337,6 @@ class GoogleCalendarSyncService:
         event_id: str,
         **updates
     ) -> Dict[str, Any]:
-        """Update a calendar event"""
         if user_id not in self.events:
             return {"error": "No events found"}
 
@@ -376,7 +363,6 @@ class GoogleCalendarSyncService:
         user_id: str,
         event_id: str
     ) -> Dict[str, Any]:
-        """Delete a calendar event"""
         if user_id not in self.events:
             return {"error": "No events found"}
 
@@ -390,7 +376,6 @@ class GoogleCalendarSyncService:
         return {"error": "Event not found"}
 
     def sync_to_google(self, user_id: str) -> Dict[str, Any]:
-        """Sync pending events to Google Calendar"""
         if user_id not in self.connections:
             return {"error": "Not connected to Google Calendar"}
 
@@ -418,7 +403,6 @@ class GoogleCalendarSyncService:
         }
 
     def import_from_google(self, user_id: str) -> Dict[str, Any]:
-        """Import events from Google Calendar (placeholder)"""
         if user_id not in self.connections:
             return {"error": "Not connected"}
 
@@ -428,7 +412,6 @@ class GoogleCalendarSyncService:
         }
 
     def get_today_agenda(self, user_id: str) -> Dict[str, Any]:
-        """Get today's agenda summary"""
         now = datetime.utcnow()
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start + timedelta(days=1)
@@ -443,7 +426,6 @@ class GoogleCalendarSyncService:
         }
 
     def _generate_agenda_summary(self, events: List[Dict[str, Any]]) -> str:
-        """Generate a summary of the day's agenda"""
         if not events:
             return "No career events scheduled for today."
 

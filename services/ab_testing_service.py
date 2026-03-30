@@ -18,7 +18,6 @@ class ABTestingService:
         self.user_assignments: Dict[str, Dict[str, str]] = {}
 
     def get_variant(self, user_id: str, experiment_id: str) -> str:
-        """Assign or retrieve a variant for a user in a given experiment."""
         if experiment_id not in self.experiments or not self.experiments[experiment_id].active:
             return "control"
 
@@ -33,7 +32,6 @@ class ABTestingService:
         return self.user_assignments[user_id][experiment_id]
 
     def log_conversion(self, user_id: str, experiment_id: str, goal_reached: bool):
-        """Placeholder for logging experiment results."""
         variant = self.get_variant(user_id, experiment_id)
         print(f"User {user_id} in {experiment_id} variant {variant} reached goal: {goal_reached}")
 

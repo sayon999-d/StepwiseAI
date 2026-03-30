@@ -63,7 +63,22 @@ class EncryptionService:
         if master_key:
             self.master_key = master_key.encode()
         else:
-            self.master_key = os.getenv("ENCRYPTION_KEY", "default_key_for_dev_only").encode()
+            env_key = os.getenv("ENCRYPTION_KEY", "")
+            if env_key:
+                self.master_key = env_key.encode()
+            else:
+                is_debug = os.getenv("DEBUG", "true").lower() in ("true", "1", "yes")
+                if not is_debug:
+                    raise RuntimeError(
+                        "ENCRYPTION_KEY environment variable MUST be set in production. "
+                        "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+                    )
+                import warnings
+                warnings.warn(
+                    "Using insecure default encryption key. Set ENCRYPTION_KEY env var for production!",
+                    stacklevel=2,
+                )
+                self.master_key = b"INSECURE_DEV_KEY_DO_NOT_USE_IN_PRODUCTION"
 
         self._fernet = None
 

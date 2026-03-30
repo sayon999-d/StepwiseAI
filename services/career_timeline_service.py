@@ -309,7 +309,6 @@ class CareerTimelineService:
         return narratives.get(phase, f"A {months}-month career chapter with {len(milestones)} milestones.")
 
     def get_progress_report(self, user_id: str) -> Dict:
-        """Generate a comprehensive progress report."""
         milestones = self.milestones.get(user_id, [])
         metrics = self.metrics_history.get(user_id, [])
 

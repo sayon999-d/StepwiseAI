@@ -164,7 +164,6 @@ class OutcomeTrackerService:
         return "needs_improvement"
 
     def get_pending_follow_ups(self, user_id: str) -> List[Dict]:
-        """Get all pending outcome follow-ups for a user."""
         now = datetime.utcnow()
         pending = []
         for reminder in self.follow_up_reminders.get(user_id, []):
@@ -182,7 +181,6 @@ class OutcomeTrackerService:
         return sorted(pending, key=lambda x: x["days_overdue"], reverse=True)
 
     def get_upcoming_follow_ups(self, user_id: str, days_ahead: int = 14) -> List[Dict]:
-        """Get upcoming follow-ups in the next N days."""
         now = datetime.utcnow()
         cutoff = now + timedelta(days=days_ahead)
         upcoming = []
@@ -328,7 +326,6 @@ class OutcomeTrackerService:
         return dashboard
 
     def get_outcome_history(self, decision_id: str) -> List[Dict]:
-        """Get all recorded outcomes for a decision over time."""
         reports = self.outcome_reports.get(decision_id, [])
         return [{
             "id": r.id,
@@ -343,7 +340,6 @@ class OutcomeTrackerService:
         } for r in sorted(reports, key=lambda x: x.interval_days)]
 
     def get_retraining_data(self) -> List[Dict]:
-        """Export data suitable for ML model retraining."""
         data = []
         for decision_id, reports in self.outcome_reports.items():
             prediction = self.predictions.get(decision_id)

@@ -678,8 +678,7 @@ class EnhancedRegretPredictor:
             load_kwargs = {"map_location": self.device}
             if "weights_only" in inspect.signature(torch.load).parameters:
                 load_kwargs["weights_only"] = True
-            # We only load local model artifacts; use weights_only when available.
-            checkpoint = torch.load(load_path, **load_kwargs)  # nosec B614
+            checkpoint = torch.load(load_path, **load_kwargs)
             self.dl_model.load_state_dict(checkpoint["dl_model_state"])
             self.is_trained = checkpoint.get("is_trained", False)
             self.dl_weight = checkpoint.get("dl_weight", 0.7)

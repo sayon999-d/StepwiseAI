@@ -212,7 +212,6 @@ class CoachingService:
         return detected_biases[:3]
 
     def distinguish_stress_vs_confusion(self, text_analysis: Dict, behavioral_metadata: Dict) -> str:
-        """Distinguish between stress and confusion for targeted intervention"""
         text_complexity = text_analysis.get('complexity_score', 0)
         uncertainty_markers = len(text_analysis.get('uncertainty_markers', []))
 
@@ -225,7 +224,6 @@ class CoachingService:
         return "normal"
 
     def determine_intervention_level(self, user_profile: UserProfile, risk_level: float) -> str:
-        """Adapt intervention level based on user needs"""
         if risk_level > 0.8:
             return "critical_intervention"
         elif risk_level > 0.5:

@@ -382,10 +382,6 @@ class DatabaseService:
             conn.commit()
             return True
 
-    # ────────────────────────────────────────────────────────
-    #  Sessions
-    # ────────────────────────────────────────────────────────
-
     def create_session(self, user_id: str, device_info: str = None, ip_address: str = None,
                        expires_hours: int = 24) -> Dict:
         session_id = secrets.token_hex(16)
@@ -503,7 +499,6 @@ class DatabaseService:
     def get_decisions(self, user_id: str, status: str = None, decision_type: str = None,
                       search: str = None, limit: int = 50, offset: int = 0,
                       sort_by: str = 'created_at', sort_order: str = 'desc') -> Tuple[List[Dict], int]:
-        """Get decisions with filtering, searching, and pagination"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
@@ -596,10 +591,6 @@ class DatabaseService:
             conn.commit()
             return cursor.rowcount > 0
 
-    # ────────────────────────────────────────────────────────
-    #  Decision Outcomes
-    # ────────────────────────────────────────────────────────
-
     def record_outcome(self, user_id: str, decision_id: str, data: Dict) -> Dict:
         outcome_id = secrets.token_hex(8)
 
@@ -629,10 +620,6 @@ class DatabaseService:
             conn.commit()
 
         return {'outcome_id': outcome_id, 'decision_id': decision_id}
-
-    # ────────────────────────────────────────────────────────
-    #  Calendar Events
-    # ────────────────────────────────────────────────────────
 
     def create_calendar_event(self, user_id: str, data: Dict) -> Dict:
         event_id = secrets.token_hex(8)

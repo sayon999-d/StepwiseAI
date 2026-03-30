@@ -62,7 +62,7 @@ class UserContext:
 
 
 class FileUploadService:
-    MAX_FILE_SIZE = 1024 * 1024 * 1024
+    MAX_FILE_SIZE = 50 * 1024 * 1024  
     ALLOWED_EXTENSIONS = {
         'text': ['.txt', '.md', '.csv', '.json', '.xml', '.yaml', '.yml'],
         'document': ['.pdf', '.doc', '.docx'],
@@ -379,8 +379,31 @@ class FileUploadService:
             del self.user_contexts[user_id]
 
     async def process_url_input(self, url: str, user_id: str) -> Dict:
-        """Process URL input for training (YouTube, articles, etc.)"""
         try:
+            from urllib.parse import urlparse
+            import ipaddress as _ipa
+            import socket
+
+            parsed = urlparse(url)
+            hostname = parsed.hostname
+            if not hostname:
+                return {"success": False, "error": "Invalid URL"}
+
+            try:
+                resolved_ips = socket.getaddrinfo(hostname, None)
+                for _, _, _, _, sockaddr in resolved_ips:
+                    ip = _ipa.ip_address(sockaddr[0])
+                    if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                        return {
+                            "success": False,
+                            "error": "URL resolves to a private/internal address and is blocked for security."
+                        }
+            except (socket.gaierror, ValueError):
+                pass  
+
+            if parsed.scheme not in ("http", "https"):
+                return {"success": False, "error": "Only HTTP and HTTPS URLs are allowed"}
+
             from services.media_ingestion_service import media_ingestion_service
             
             media_source = await media_ingestion_service.process_url(url, user_id)

@@ -8,7 +8,6 @@ from .database_service import db_service
 
 
 class AIPersonalizationService:
-    """Service for personalized AI responses based on user history"""
     
     def __init__(self):
         self.user_preferences: Dict[str, Dict] = {}
@@ -16,7 +15,6 @@ class AIPersonalizationService:
         self.feedback_scores: Dict[str, List[Dict]] = {}
     
     def get_user_context(self, user_id: str) -> Dict:
-        """Get comprehensive user context for AI personalization"""
         decisions, total = db_service.get_decisions(user_id, limit=50)
         
         decision_types = defaultdict(int)
@@ -69,7 +67,6 @@ class AIPersonalizationService:
         return context
     
     def _calculate_experience_level(self, total_decisions: int) -> str:
-        """Calculate user experience level"""
         if total_decisions < 5:
             return "beginner"
         elif total_decisions < 20:
@@ -112,7 +109,6 @@ class AIPersonalizationService:
     
     def record_feedback(self, user_id: str, message_id: str, feedback_type: str, 
                        rating: int = None, context: Dict = None):
-        """Record user feedback on AI responses"""
         feedback = {
             "message_id": message_id,
             "feedback_type": feedback_type,
@@ -135,7 +131,6 @@ class AIPersonalizationService:
         self.feedback_scores[user_id].append(feedback)
     
     def get_feedback_summary(self, user_id: str) -> Dict:
-        """Get summary of AI feedback for a user"""
         feedbacks = self.feedback_scores.get(user_id, [])
         
         if not feedbacks:
@@ -154,7 +149,6 @@ class AIPersonalizationService:
         }
     
     def adjust_regret_prediction(self, user_id: str, base_prediction: float) -> float:
-        """Adjust regret prediction based on user's historical accuracy"""
         decisions, _ = db_service.get_decisions(user_id, limit=50)
         
         calibration_data = []
@@ -176,7 +170,6 @@ class AIPersonalizationService:
         return max(0, min(100, adjusted))
     
     def get_personalized_suggestions(self, user_id: str, decision_type: str = None) -> List[Dict]:
-        """Get personalized suggestions based on user history"""
         context = self.get_user_context(user_id)
         suggestions = []
         
@@ -224,7 +217,6 @@ class AIPersonalizationService:
         return suggestions[:3]
     
     def learn_from_outcome(self, user_id: str, decision_id: str, actual_regret: float):
-        """Update personalization based on actual outcome"""
         decision = db_service.get_decision(user_id, decision_id)
         
         if not decision:
@@ -260,7 +252,6 @@ class AIPersonalizationService:
             )
     
     def get_learning_insights(self, user_id: str) -> Dict:
-        """Get insights from AI learning"""
         decisions, _ = db_service.get_decisions(user_id, limit=100)
         
         type_accuracy = defaultdict(lambda: {'predictions': [], 'actuals': []})
@@ -293,7 +284,6 @@ class AIPersonalizationService:
         }
     
     def _generate_learning_recommendation(self, strengths: List[str], weaknesses: List[str]) -> str:
-        """Generate recommendation based on learning insights"""
         if not strengths and not weaknesses:
             return "Keep making decisions and recording outcomes to improve prediction accuracy."
         

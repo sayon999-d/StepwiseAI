@@ -23,7 +23,6 @@ class AuthService:
         self.failed_attempts = {}
     
     def create_access_token(self, user_id: str, extra_data: Dict = None) -> str:
-        """Create JWT access token"""
         expires = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
         payload = {
             "sub": user_id,
@@ -55,8 +54,17 @@ class AuthService:
             return None
     
     def register_user(self, email: str, username: str, password: str, full_name: str = None) -> Dict:
-        if len(password) < 8:
-            raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+        import re
+        if len(password) < 12:
+            raise HTTPException(status_code=400, detail="Password must be at least 12 characters")
+        if not re.search(r'[A-Z]', password):
+            raise HTTPException(status_code=400, detail="Password must contain an uppercase letter")
+        if not re.search(r'[a-z]', password):
+            raise HTTPException(status_code=400, detail="Password must contain a lowercase letter")
+        if not re.search(r'\d', password):
+            raise HTTPException(status_code=400, detail="Password must contain a number")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            raise HTTPException(status_code=400, detail="Password must contain a special character")
         
         if len(username) < 3:
             raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
@@ -87,7 +95,6 @@ class AuthService:
         }
     
     def login(self, email: str, password: str, device_info: str = None, ip_address: str = None) -> Dict:
-        """Authenticate user and return tokens"""
         if self._is_blocked(email):
             raise HTTPException(status_code=429, detail="Too many failed attempts. Try again later.")
         
@@ -119,11 +126,9 @@ class AuthService:
         }
     
     def logout(self, token: str) -> bool:
-        """Invalidate session"""
         return db_service.invalidate_session(token)
     
     def refresh_tokens(self, refresh_token: str) -> Dict:
-        """Get new access token using refresh token"""
         payload = self.verify_token(refresh_token, "refresh")
         if not payload:
             raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
@@ -144,7 +149,6 @@ class AuthService:
         }
     
     def get_current_user(self, token: str) -> Optional[Dict]:
-        """Get user from token"""
         payload = self.verify_token(token)
         if not payload:
             return None
@@ -153,7 +157,6 @@ class AuthService:
         return db_service.get_user_by_id(user_id)
     
     def change_password(self, user_id: str, old_password: str, new_password: str) -> bool:
-        """Change user password"""
         if len(new_password) < 8:
             raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
         
@@ -164,7 +167,6 @@ class AuthService:
         return True
     
     def request_password_reset(self, email: str) -> str:
-        """Generate password reset token"""
         user = db_service.get_user_by_email(email)
         if not user:
             return secrets.token_urlsafe(32)
@@ -178,7 +180,6 @@ class AuthService:
         return reset_token
     
     def reset_password(self, reset_token: str, new_password: str) -> bool:
-        """Reset password using token"""
         try:
             payload = jwt.decode(reset_token, self.secret_key, algorithms=[self.algorithm])
             if payload.get("type") != "reset":
@@ -192,7 +193,6 @@ class AuthService:
             raise HTTPException(status_code=400, detail="Invalid reset token")
     
     def _is_blocked(self, email: str) -> bool:
-        """Check if email is blocked due to too many failed attempts"""
         if email not in self.failed_attempts:
             return False
         
@@ -207,7 +207,6 @@ class AuthService:
         return False
     
     def _record_failed_attempt(self, email: str):
-        """Record failed login attempt"""
         if email in self.failed_attempts:
             attempts, _ = self.failed_attempts[email]
             self.failed_attempts[email] = (attempts + 1, datetime.utcnow())
@@ -215,7 +214,6 @@ class AuthService:
             self.failed_attempts[email] = (1, datetime.utcnow())
     
     def _clear_failed_attempts(self, email: str):
-        """Clear failed attempts after successful login"""
         if email in self.failed_attempts:
             del self.failed_attempts[email]
 
@@ -226,7 +224,6 @@ auth_service = AuthService()
 async def get_current_user_dependency(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> Dict:
-    """FastAPI dependency for protected routes"""
     if not credentials:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
@@ -240,7 +237,6 @@ async def get_current_user_dependency(
 async def get_optional_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> Optional[Dict]:
-    """FastAPI dependency for optional authentication"""
     if not credentials:
         return None
     

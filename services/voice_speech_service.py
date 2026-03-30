@@ -70,17 +70,15 @@ class VoiceSpeechService:
     def _initialize_engines(self):
         try:
             import whisper
+            if not hasattr(whisper, 'load_model'):
+                raise ImportError("Installed 'whisper' package is not OpenAI Whisper (missing load_model)")
             self.whisper_model = whisper.load_model("base")
             self.stt_provider = VoiceProvider.WHISPER
             print("Whisper STT initialized")
-        except ImportError as e:
+        except ImportError:
             self.stt_provider = VoiceProvider.BROWSER
-            print(f"Whisper import failed: {e}")
-            print("Using browser-based STT (Whisper not available)")
-        except Exception as e:
+        except Exception:
             self.stt_provider = VoiceProvider.BROWSER
-            print(f"Whisper initialization error: {e}")
-            print("Using browser-based STT (Whisper not available)")
 
         try:
             import pyttsx3

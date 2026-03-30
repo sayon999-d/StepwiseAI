@@ -354,7 +354,6 @@ class CareerFeedService:
         return min(100, base)
 
     def mark_read(self, user_id: str, item_id: str) -> Dict:
-        """Mark an item as read and track engagement."""
         for item in self.user_feeds.get(user_id, []):
             if item.id == item_id:
                 item.read = True
@@ -366,7 +365,6 @@ class CareerFeedService:
         return {"error": "Item not found"}
 
     def bookmark_item(self, user_id: str, item_id: str) -> Dict:
-        """Bookmark a feed item."""
         for item in self.user_feeds.get(user_id, []):
             if item.id == item_id:
                 item.bookmarked = not item.bookmarked

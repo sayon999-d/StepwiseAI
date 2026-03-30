@@ -94,6 +94,7 @@ from .goal_tracking_service import GoalTrackingService, goal_tracking_service
 from .reversal_analyzer_service import ReversalAnalyzerService, reversal_analyzer_service
 from .multilingual_service import MultilingualService, multilingual_service
 from .pwa_service import PWAService, pwa_service
+from .long_term_memory_service import LongTermMemoryService, long_term_memory_service
 
 __all__ = [
     "EnhancedOllamaService", "OllamaService", "OllamaConfig",
@@ -156,5 +157,6 @@ __all__ = [
     "GoalTrackingService", "goal_tracking_service",
     "ReversalAnalyzerService", "reversal_analyzer_service",
     "MultilingualService", "multilingual_service",
-    "PWAService", "pwa_service"
+    "PWAService", "pwa_service",
+    "LongTermMemoryService", "long_term_memory_service",
 ]

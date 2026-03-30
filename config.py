@@ -38,7 +38,7 @@ def _env_float(key: str, default: float = 0.0) -> float:
 class Settings(BaseModel):
     HOST: str = _env("HOST", "127.0.0.1")
     PORT: int = _env_int("PORT", 8000)
-    DEBUG: bool = _env_bool("DEBUG", True)
+    DEBUG: bool = _env_bool("DEBUG", False)
 
     OLLAMA_BASE_URL: str = _env("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = _env("OLLAMA_MODEL", "llama3.2")

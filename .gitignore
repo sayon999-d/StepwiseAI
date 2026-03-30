@@ -76,3 +76,12 @@ data/*.db
 
 # Local env config
 env.config
+
+# Admin credentials (auto-generated)
+.admin_credentials
+data/.admin_credentials
+
+# Long-term memory DB
+long_term_memory.db
+data/long_term_memory.db-shm
+data/long_term_memory.db-wal

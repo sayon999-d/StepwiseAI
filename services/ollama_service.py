@@ -6,6 +6,11 @@ from datetime import datetime
 from collections import deque
 from services.security import ai_security
 
+try:
+    from services.long_term_memory_service import long_term_memory_service
+except Exception:
+    long_term_memory_service = None
+
 @dataclass
 class OllamaConfig:
     base_url: str = "http://localhost:11434"
@@ -177,6 +182,7 @@ class EnhancedOllamaService:
         self.is_available = False
         self.rag_service = rag_service
         self.conversations: Dict[str, ConversationMemory] = {}
+        self.ltm = long_term_memory_service 
         self.fallback_responses = {
             "greeting": ["Hello, I'm here to help you think through your career decisions. What's on your mind?", "Hi there. I'm your career guidance assistant. Tell me about the decision you're considering.", "Welcome. I'm here to help you navigate career decisions with clarity. What would you like to discuss?"],
             "clarification": ["Could you tell me more about that?", "What specific aspects are you most concerned about?", "Help me understand the context better - what's driving this decision?"],
@@ -254,6 +260,8 @@ class EnhancedOllamaService:
         memory = self.conversations[user_id]
         memory.add_message("user", message)
 
+        self._auto_store_memory(user_id, message)
+
         if self.is_available:
             try:
                 response = await self._chat_with_ollama(message, memory, context)
@@ -263,6 +271,8 @@ class EnhancedOllamaService:
                     summary = await self.summarize_conversation(user_id)
                     if summary:
                         memory.set_summary(summary)
+                        if self.ltm:
+                            self.ltm.store_conversation_summary(user_id, summary)
 
                 return response
             except Exception:
@@ -281,6 +291,12 @@ class EnhancedOllamaService:
 
         system = config["system_prompt"]
         additional_messages = []
+
+        if self.ltm:
+            user_id = context.get('user_id', 'default') if context else 'default'
+            ltm_context = self.ltm.get_context_for_chat(user_id, message)
+            if ltm_context:
+                system = f"{system}\n\n{ltm_context}"
 
         if complexity == TaskComplexity.HIGH:
             if context:
@@ -569,6 +585,50 @@ class EnhancedOllamaService:
     def clear_conversation(self, user_id: str):
         if user_id in self.conversations:
             self.conversations[user_id].clear()
+
+    def _auto_store_memory(self, user_id: str, message: str):
+        if not self.ltm or not message or len(message) < 15:
+            return
+
+        msg_lower = message.lower()
+
+        fact_patterns = [
+            ("i work", "fact"), ("i am a", "fact"), ("i'm a", "fact"),
+            ("my role", "fact"), ("my job", "fact"), ("my company", "fact"),
+            ("i have been", "fact"), ("years of experience", "fact"),
+            ("my salary", "fact"), ("i earn", "fact"), ("i make", "fact"),
+            ("i live in", "fact"), ("i'm based in", "fact"),
+            ("my degree", "fact"), ("i studied", "fact"), ("i graduated", "fact"),
+        ]
+
+        preference_patterns = [
+            ("i prefer", "preference"), ("i like", "preference"),
+            ("i don't like", "preference"), ("i hate", "preference"),
+            ("i want", "preference"), ("i need", "preference"),
+            ("important to me", "preference"), ("i value", "preference"),
+        ]
+
+        decision_patterns = [
+            ("i decided", "decision"), ("i chose", "decision"),
+            ("i accepted", "decision"), ("i rejected", "decision"),
+            ("i quit", "decision"), ("i joined", "decision"),
+            ("i'm going to", "decision"), ("i will", "decision"),
+        ]
+
+        for pattern, mem_type in fact_patterns + preference_patterns + decision_patterns:
+            if pattern in msg_lower:
+                importance = 0.7 if mem_type == "fact" else 0.6
+                try:
+                    self.ltm.store_memory(
+                        user_id=user_id,
+                        content=message[:500],
+                        memory_type=mem_type,
+                        importance=importance,
+                        source="auto_extract",
+                    )
+                except Exception:
+                    pass
+                return
 
     async def close(self):
         await self.client.aclose()

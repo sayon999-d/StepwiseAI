@@ -52,6 +52,14 @@ class SecurityConfig:
 
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
+    TRUSTED_PROXIES: set = set(
+        p.strip() for p in os.getenv("TRUSTED_PROXIES", "127.0.0.1").split(",") if p.strip()
+    )
+
+    ENCRYPTION_KEY: str = os.getenv("ENCRYPTION_KEY", "")
+    if not ENCRYPTION_KEY and not DEBUG:
+        print("SECURITY ERROR: ENCRYPTION_KEY must be set in production! Data encryption is compromised.")
+
     BLOCKED_PATTERNS: List[str] = [
         r"<script",
         r"javascript:",
@@ -801,8 +809,21 @@ class HardenedAuthService:
         admin_password = os.getenv("ADMIN_PASSWORD")
         if not admin_password:
             admin_password = secrets.token_urlsafe(32)
-            print(f"SECURITY: Auto-generated admin password: {admin_password}")
-            print("   Set ADMIN_PASSWORD environment variable in production!")
+            admin_cred_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)), 'data', '.admin_credentials'
+            )
+            try:
+                os.makedirs(os.path.dirname(admin_cred_path), exist_ok=True)
+                with open(admin_cred_path, 'w') as f:
+                    f.write(f"admin_password={admin_password}\n")
+                os.chmod(admin_cred_path, 0o600)
+                security_logger.warning(
+                    f"Auto-generated admin password written to {admin_cred_path} (chmod 600). "
+                    "Set ADMIN_PASSWORD environment variable in production!"
+                )
+            except Exception as e:
+                security_logger.error(f"Could not write admin credentials file: {e}")
+                print("SECURITY: Admin password auto-generated. Set ADMIN_PASSWORD env var. Check data/.admin_credentials")
 
         admin = SecureUser(
             id="admin_001",
@@ -1004,15 +1025,17 @@ class SecurityMiddlewareHelper:
         return True, None, 200
 
     def get_client_ip(self, request_headers: Dict[str, str], direct_ip: str) -> str:
-        forwarded_for = request_headers.get("x-forwarded-for", "")
-        if forwarded_for:
-            ip = forwarded_for.split(",")[0].strip()
-            if self.ip_manager.is_valid_ip(ip):
-                return ip
+        trusted_proxies = SecurityConfig.TRUSTED_PROXIES
+        if direct_ip in trusted_proxies:
+            forwarded_for = request_headers.get("x-forwarded-for", "")
+            if forwarded_for:
+                ip = forwarded_for.split(",")[0].strip()
+                if self.ip_manager.is_valid_ip(ip):
+                    return ip
 
-        real_ip = request_headers.get("x-real-ip", "")
-        if real_ip and self.ip_manager.is_valid_ip(real_ip):
-            return real_ip
+            real_ip = request_headers.get("x-real-ip", "")
+            if real_ip and self.ip_manager.is_valid_ip(real_ip):
+                return real_ip
 
         return direct_ip
 
